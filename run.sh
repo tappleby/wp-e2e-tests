@@ -8,17 +8,21 @@ OPTS=""
 SCREENSIZES="mobile,desktop,tablet"
 RETURN=0
 
-I18N_CONFIG="--NODE_CONFIG='{\"browser\":\"firefox\",\"proxy\":\"system\",\"neverSaveScreenshots\":\"true\"}'"
-VISDIFF_CONFIG="--NODE_CONFIG='{\"browser\":\"firefox\", \"proxy\":\"system\", \"neverSaveScreenshots\":\"true\"}'"
+# Function to join arrays into a string
+function joinStr { local IFS="$1"; shift; echo "$*"; }
+
+I18N_CONFIG='"browser":"firefox","proxy":"system","neverSaveScreenshots":"true"'
+VISDIFF_CONFIG='"neverSaveScreenshots":"true"'
 declare -a TARGETS
+declare -a NODE_CONFIGS
 
 usage () {
   cat <<EOF
 -R		  - Use custom Slack/Spec/XUnit reporter, otherwise just use Spec reporter
 -p [jobs]	  - Execute [num] jobs in parallel
--s		  - Screensizes in a comma-separated list (defaults to mobile,desktop,tablet)
+-s		  - Screensizes in a comma-separated list (defaults to mobile,desktop,tablet); Prepend a browser name to use something other than the default Chrome (i.e. firefox:desktop)
 -g		  - Execute general tests in the specs/ directory
--i		  - Execute i18n tests in the specs-i18n/ directory
+-i		  - Execute i18n tests in the specs-i18n/ directory (Uses Firefox)
 -v [all/critical] - Execute the visdiff tests in specs-visdiff[/critical].  Must specify either 'all' or 'critical'.
 -h		  - This help listing
 EOF
@@ -48,13 +52,15 @@ while getopts ":Rp:s:giv:h" opt; do
       TARGET="specs/"
       ;;
     i)
-      TARGET="$I18N_CONFIG specs-i18n/"
+      NODE_CONFIGS+=$I18N_CONFIG
+      TARGET="specs-i18n/"
       ;;
     v)
+      NODE_CONFIGS+=$VISDIFF_CONFIG
       if [ "$OPTARG" == "all" ]; then
-        TARGET="$VISDIFF_CONFIG specs-visdiff/\*"
+        TARGET="specs-visdiff/\*"
       elif [ "$OPTARG" == "critical" ]; then
-        TARGET="$VISDIFF_CONFIG specs-visdiff/critical/"
+        TARGET="specs-visdiff/critical/"
       else
         echo "-v supports the following values: all or critical"
         exit 1
@@ -84,7 +90,17 @@ rm -f parallel_exec.cmd
 IFS=, read -r -a SCREENSIZE_ARRAY <<< "$SCREENSIZES"
 for size in ${SCREENSIZE_ARRAY[@]}; do
   for target in "${TARGETS[@]}"; do
-    CMD="env BROWSERSIZE=$size $MOCHA $REPORTER $target $AFTER"
+    # Combine any NODE_CONFIG entries into a single object
+    NODE_CONFIG="$(joinStr , ${NODE_CONFIGS[@]})"
+
+    # Parse the browser out of the screensize parameter if necessary
+    if [[ $size == *:* ]]; then
+      BROWSER=$(echo $size | awk -F: '{print $1}')
+      size=$(echo $size | awk -F: '{print $2}')
+      NODE_CONFIG+=",\"browser\":\"$BROWSER\""
+    fi
+
+    CMD="env BROWSERSIZE=$size $MOCHA --NODE_CONFIG='{$NODE_CONFIG}' $REPORTER $target $AFTER"
 
     if [ $PARALLEL == 1 ]; then
       echo $CMD >> parallel_exec.cmd
