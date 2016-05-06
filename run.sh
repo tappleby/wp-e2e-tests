@@ -14,7 +14,7 @@ function joinStr { local IFS="$1"; shift; echo "$*"; }
 I18N_CONFIG='"browser":"firefox","proxy":"system","neverSaveScreenshots":"true"'
 VISDIFF_CONFIG='"neverSaveScreenshots":"true"'
 declare -a TARGETS
-declare -a NODE_CONFIGS
+declare -a NODE_CONFIG_ARGS
 
 usage () {
   cat <<EOF
@@ -52,11 +52,11 @@ while getopts ":Rp:s:giv:h" opt; do
       TARGET="specs/"
       ;;
     i)
-      NODE_CONFIGS+=$I18N_CONFIG
+      NODE_CONFIG_ARGS+=$I18N_CONFIG
       TARGET="specs-i18n/"
       ;;
     v)
-      NODE_CONFIGS+=$VISDIFF_CONFIG
+      NODE_CONFIG_ARGS+=$VISDIFF_CONFIG
       if [ "$OPTARG" == "all" ]; then
         TARGET="specs-visdiff/\*"
       elif [ "$OPTARG" == "critical" ]; then
@@ -91,16 +91,17 @@ IFS=, read -r -a SCREENSIZE_ARRAY <<< "$SCREENSIZES"
 for size in ${SCREENSIZE_ARRAY[@]}; do
   for target in "${TARGETS[@]}"; do
     # Combine any NODE_CONFIG entries into a single object
-    NODE_CONFIG="$(joinStr , ${NODE_CONFIGS[@]})"
+    NODE_CONFIG_ARG="$(joinStr , ${NODE_CONFIG_ARGS[@]})"
 
     # Parse the browser out of the screensize parameter if necessary
     if [[ $size == *:* ]]; then
       BROWSER=$(echo $size | awk -F: '{print $1}')
       size=$(echo $size | awk -F: '{print $2}')
-      NODE_CONFIG+=",\"browser\":\"$BROWSER\""
+      NODE_CONFIG_ARG+=",\"browser\":\"$BROWSER\""
+      NC="--NODE_CONFIG='{$NODE_CONFIG_ARG}'"
     fi
 
-    CMD="env BROWSERSIZE=$size $MOCHA --NODE_CONFIG='{$NODE_CONFIG}' $REPORTER $target $AFTER"
+    CMD="env BROWSERSIZE=$size $MOCHA $NC $REPORTER $target $AFTER"
 
     if [ $PARALLEL == 1 ]; then
       echo $CMD >> parallel_exec.cmd
