@@ -66,85 +66,79 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 			devdocsDesignPage.getAllDesignElementLinks().then( function( anchors ) {
 				let flow = driver.controlFlow();
 
-				try {
-					for ( const anchor of anchors.reverse() ) {
-						let title;
-						let compactable;
+				for ( const anchor of anchors ) {
+					let title;
+					let compactable;
 
-						// Scroll the element into view
-	//					flow.execute( function() {
-	//						console.log( 'Loop #' + ++count );
-	//						console.log( 'scroll to element' );
-	//						return driver.executeScript( 'arguments[0].scrollIntoView(true);', anchor );
-	//					} );
-						// Sleep, perchance to dream
-						flow.execute( function() {
-							console.log( 'sleeping' );
-							return driver.sleep( 0 );
+					// Scroll the element into view
+//					flow.execute( function() {
+//						console.log( 'Loop #' + ++count );
+//						console.log( 'scroll to element' );
+//						return driver.executeScript( 'arguments[0].scrollIntoView(true);', anchor );
+//					} );
+					// Sleep, perchance to dream
+					flow.execute( function() {
+						console.log( 'sleeping' );
+						return driver.sleep( 0 );
+					} );
+					// Open the design element
+					flow.execute( function() {
+						console.log( 'open' );
+						return anchor.getAttribute( 'href' ).then( function( href ) {
+							console.log( href );
+							anchor.click();
 						} );
-						// Open the design element
-						flow.execute( function() {
-							console.log( 'open' );
-							return anchor.getAttribute( 'href' ).then( function( href ) {
-								console.log( href );
-								anchor.click();
-							} );
+					} );
+					// Scroll back to the top of the page
+					flow.execute( function() {
+						console.log( 'scroll to top' );
+						return driver.executeScript( 'window.scrollTo( 0, 0 )' );
+					} );
+					// Get the title
+					flow.execute( function() {
+						console.log( 'get title' );
+						return devdocsDesignPage.getCurrentElementTitle().then( function( _title ) {
+							title = _title;
 						} );
-						// Scroll back to the top of the page
-						flow.execute( function() {
-							console.log( 'scroll to top' );
-							return driver.executeScript( 'window.scrollTo( 0, 0 )' );
+					} );
+					// Take the screenshot
+					flow.execute( function() {
+						console.log( 'take screenshot' );
+						return driverHelper.eyesScreenshot( driver, eyes, title );
+					} );
+					// Check for Compact button
+					flow.execute( function() {
+						console.log( 'check for compact' );
+						return devdocsDesignPage.isCurrentElementCompactable().then( function( _compactable ) {
+							compactable = _compactable;
 						} );
-						// Get the title
-						flow.execute( function() {
-							console.log( 'get title' );
-							return devdocsDesignPage.getCurrentElementTitle().then( function( _title ) {
-								title = _title;
-							} );
-						} );
-						// Take the screenshot
-						flow.execute( function() {
-							console.log( 'take screenshot' );
-							return driverHelper.eyesScreenshot( driver, eyes, title );
-						} );
-						// Check for Compact button
-						flow.execute( function() {
-							console.log( 'check for compact' );
-							return devdocsDesignPage.isCurrentElementCompactable().then( function( _compactable ) {
-								compactable = _compactable;
-							} );
-						} );
-						// Click the Compact button (if available)
-						flow.execute( function() {
-							console.log( 'click compact' );
-							if ( compactable ) {
-								console.log( 'actually click compact' );
-								return devdocsDesignPage.getCurrentElementCompactButton().then( function( button ) {
-									button.click().then( function() {
-										return driverHelper.eyesScreenshot( driver, eyes, title + ' (Compact)' );
-									} );
+					} );
+					// Click the Compact button (if available)
+					flow.execute( function() {
+						console.log( 'click compact' );
+						if ( compactable ) {
+							console.log( 'actually click compact' );
+							return devdocsDesignPage.getCurrentElementCompactButton().then( function( button ) {
+								button.click().then( function() {
+									return driverHelper.eyesScreenshot( driver, eyes, title + ' (Compact)' );
 								} );
-							}
-						} );
-						// Scroll back to the top of the page
-						flow.execute( function() {
-							console.log( 'scroll to top' );
-							return driver.executeScript( 'window.scrollTo( 0, 0 )' );
-						} );
-						// Return to the main list
-						flow.execute( function() {
-							console.log( 'return' );
-							return devdocsDesignPage.returnToAllComponents();
-						} );
-						// Sleep, perchance to dream
-						flow.execute( function() {
-							console.log( 'sleeping' );
-							return driver.sleep( 0 );
-						} );
-					}
-				} catch ( err ) {
-					driver.getPageSource().then( function( source ) {
-						console.log( source );
+							} );
+						}
+					} );
+					// Scroll back to the top of the page
+					flow.execute( function() {
+						console.log( 'scroll to top' );
+						return driver.executeScript( 'window.scrollTo( 0, 0 )' );
+					} );
+					// Return to the main list
+					flow.execute( function() {
+						console.log( 'return' );
+						return devdocsDesignPage.returnToAllComponents();
+					} );
+					// Sleep, perchance to dream
+					flow.execute( function() {
+						console.log( 'sleeping' );
+						return driver.sleep( 0 );
 					} );
 				}
 			} );
