@@ -11,9 +11,6 @@ const mochaVisDiffTimeOut = config.get( 'mochaVisDiffTimeoutMS' );
 const mochaDevDocsTimeOut = config.get( 'mochaDevDocsTimeoutMS' );
 const startBrowserTimeoutMS = config.get( 'startBrowserTimeoutMS' );
 
-import webdriver from 'selenium-webdriver';
-const by = webdriver.By;
-
 let driver, screenSize, screenSizeName;
 screenSizeName = driverManager.currentScreenSize();
 
@@ -21,6 +18,7 @@ let Eyes = require( 'eyes.selenium' ).Eyes;
 let eyes = new Eyes();
 eyes.setApiKey( config.get( 'eyesKey' ) );
 eyes.setForceFullPageScreenshot( true );
+eyes.setStitchMode( Eyes.StitchMode.CSS );
 
 if ( process.env.CIRCLE_BUILD_NUM ) {
 	eyes.setBatch( `wp-e2e-tests #${process.env.CIRCLE_BUILD_NUM}`, process.env.CIRCLE_BUILD_NUM );
@@ -65,32 +63,88 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 	test.it( 'Verify UI Components', function() {
 		this.timeout( mochaDevDocsTimeOut );
 		devdocsDesignPage.openUIComponents().then( function() {
-			devdocsDesignPage.getAllDesignElements().then( function( elements ) {
-				// Screenshot each element individually to avoid Applitools page size restrictions
-				for ( const el of elements ) {
-					// Retrieve the name of the element, and the "Compact" button if available
-					el.findElements( by.css( 'h2 a' ) ).then( function( anchors ) {
-						// Two anchors means there's a "Compact" option
-						if ( anchors.length === 2 ) {
-							anchors[0].getInnerHtml().then( function( name ) {
-								driverHelper.eyesScreenshot( driver, eyes, name + ' (Full)', el );
-								anchors[1].click().then( function() {
-									driverHelper.eyesScreenshot( driver, eyes, name + ' (Compact)', el );
+			devdocsDesignPage.getAllDesignElementLinks().then( function( anchors ) {
+				let flow = driver.controlFlow();
+
+				try {
+					for ( const anchor of anchors.reverse() ) {
+						let title;
+						let compactable;
+
+						// Scroll the element into view
+	//					flow.execute( function() {
+	//						console.log( 'Loop #' + ++count );
+	//						console.log( 'scroll to element' );
+	//						return driver.executeScript( 'arguments[0].scrollIntoView(true);', anchor );
+	//					} );
+						// Sleep, perchance to dream
+						flow.execute( function() {
+							console.log( 'sleeping' );
+							return driver.sleep( 0 );
+						} );
+						// Open the design element
+						flow.execute( function() {
+							console.log( 'open' );
+							return anchor.getAttribute( 'href' ).then( function( href ) {
+								console.log( href );
+								anchor.click();
+							} );
+						} );
+						// Scroll back to the top of the page
+						flow.execute( function() {
+							console.log( 'scroll to top' );
+							return driver.executeScript( 'window.scrollTo( 0, 0 )' );
+						} );
+						// Get the title
+						flow.execute( function() {
+							console.log( 'get title' );
+							return devdocsDesignPage.getCurrentElementTitle().then( function( _title ) {
+								title = _title;
+							} );
+						} );
+						// Take the screenshot
+						flow.execute( function() {
+							console.log( 'take screenshot' );
+							return driverHelper.eyesScreenshot( driver, eyes, title );
+						} );
+						// Check for Compact button
+						flow.execute( function() {
+							console.log( 'check for compact' );
+							return devdocsDesignPage.isCurrentElementCompactable().then( function( _compactable ) {
+								compactable = _compactable;
+							} );
+						} );
+						// Click the Compact button (if available)
+						flow.execute( function() {
+							console.log( 'click compact' );
+							if ( compactable ) {
+								console.log( 'actually click compact' );
+								return devdocsDesignPage.getCurrentElementCompactButton().then( function( button ) {
+									button.click().then( function() {
+										return driverHelper.eyesScreenshot( driver, eyes, title + ' (Compact)' );
+									} );
 								} );
-							} );
-						} else if ( anchors.length === 1 ) {
-							anchors[0].getInnerHtml().then( function( name ) {
-								driverHelper.eyesScreenshot( driver, eyes, name, el );
-							} );
-						} else if ( anchors.length === 0 ) { // wp-calypso issue #4079, but could recur, so I'm leaving the check
-							el.findElement( by.css( 'h2' ) ).then( function( h2 ) {
-								h2.getInnerHtml().then( function( name ) {
-									driverHelper.eyesScreenshot( driver, eyes, name, el );
-								} );
-							} );
-						} else {
-							throw new Error( 'Unexpected number of "h2 a" tags in Design Element' );
-						}
+							}
+						} );
+						// Scroll back to the top of the page
+						flow.execute( function() {
+							console.log( 'scroll to top' );
+							return driver.executeScript( 'window.scrollTo( 0, 0 )' );
+						} );
+						// Return to the main list
+						flow.execute( function() {
+							console.log( 'return' );
+							return devdocsDesignPage.returnToAllComponents();
+						} );
+						// Sleep, perchance to dream
+						flow.execute( function() {
+							console.log( 'sleeping' );
+							return driver.sleep( 0 );
+						} );
+					}
+				} catch ( err ) {
+					driver.getPageSource().then( function( source ) {
+						console.log( source );
 					} );
 				}
 			} );
