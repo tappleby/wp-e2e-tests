@@ -9,9 +9,13 @@ SCREENSIZES="mobile,desktop,tablet"
 VISDIFF=0
 RETURN=0
 
-I18N_CONFIG="--NODE_CONFIG='{\"browser\":\"firefox\",\"proxy\":\"system\",\"neverSaveScreenshots\":\"true\"}'"
-VISDIFF_CONFIG="--NODE_CONFIG='{\"browser\":\"firefox\", \"proxy\":\"system\", \"neverSaveScreenshots\":\"true\"}'"
+# Function to join arrays into a string
+function joinStr { local IFS="$1"; shift; echo "$*"; }
+
+I18N_CONFIG='"browser":"firefox","proxy":"system","neverSaveScreenshots":"true"'
+VISDIFF_CONFIG='"neverSaveScreenshots":"true"'
 declare -a TARGETS
+declare -a NODE_CONFIGS
 
 usage () {
   cat <<EOF
@@ -19,7 +23,7 @@ usage () {
 -p 		  - Execute the tests in parallel via CircleCI envvars (implies -g -s mobile,desktop,tablet)
 -s		  - Screensizes in a comma-separated list (defaults to mobile,desktop,tablet)
 -g		  - Execute general tests in the specs/ directory
--i		  - Execute i18n tests in the specs-i18n/ directory
+-i		  - Execute i18n tests in the specs-i18n/ directory (Uses Firefox)
 -v [all/critical] - Execute the visdiff tests in specs-visdiff[/critical].  Must specify either 'all' or 'critical'.
 -h		  - This help listing
 EOF
@@ -48,14 +52,15 @@ while getopts ":Rps:giv:h" opt; do
       TARGET="specs/"
       ;;
     i)
-      TARGET="$I18N_CONFIG specs-i18n/"
+      NODE_CONFIGS+=$I18N_CONFIG
+      TARGET="specs-i18n/"
       ;;
     v)
       VISDIFF=1
       if [ "$OPTARG" == "all" ]; then
-        TARGET="$VISDIFF_CONFIG specs-visdiff/\*"
+        TARGET="specs-visdiff/\*"
       elif [ "$OPTARG" == "critical" ]; then
-        TARGET="$VISDIFF_CONFIG specs-visdiff/critical/"
+        TARGET="specs-visdiff/critical/"
       else
         echo "-v supports the following values: all or critical"
         exit 1
