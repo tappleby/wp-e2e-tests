@@ -15,7 +15,7 @@ function joinStr { local IFS="$1"; shift; echo "$*"; }
 I18N_CONFIG='"browser":"firefox","proxy":"system","neverSaveScreenshots":"true"'
 VISDIFF_CONFIG='"neverSaveScreenshots":"true"'
 declare -a TARGETS
-declare -a NODE_CONFIGS
+declare -a NODE_CONFIG_ARGS
 
 usage () {
   cat <<EOF
@@ -52,7 +52,7 @@ while getopts ":Rps:giv:h" opt; do
       TARGET="specs/"
       ;;
     i)
-      NODE_CONFIGS+=$I18N_CONFIG
+      NODE_CONFIG_ARGS+=$I18N_CONFIG
       TARGET="specs-i18n/"
       ;;
     v)
