@@ -18,7 +18,7 @@ let Eyes = require( 'eyes.selenium' ).Eyes;
 let eyes = new Eyes();
 eyes.setApiKey( config.get( 'eyesKey' ) );
 eyes.setForceFullPageScreenshot( true );
-eyes.setStitchMode( Eyes.StitchMode.CSS );
+//eyes.setStitchMode( Eyes.StitchMode.CSS );
 
 if ( process.env.CIRCLE_BUILD_NUM ) {
 	eyes.setBatch( `wp-e2e-tests #${process.env.CIRCLE_BUILD_NUM}`, process.env.CIRCLE_BUILD_NUM );
@@ -61,12 +61,13 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 	} );
 
 	test.it( 'Verify UI Components', function() {
-		this.timeout( mochaDevDocsTimeOut );
+		this.timeout( mochaDevDocsTimeOut * 2 );
 		devdocsDesignPage.openUIComponents().then( function() {
 			devdocsDesignPage.getAllDesignElementLinks().then( function( anchors ) {
 				let flow = driver.controlFlow();
+//TODO: Hide the masterbar so the CSS stitching doesn't make it overlay any elements
 
-				for ( const anchor of anchors ) {
+				for ( const href of anchors ) {
 					let title;
 					let compactable;
 
@@ -76,18 +77,10 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 //						console.log( 'scroll to element' );
 //						return driver.executeScript( 'arguments[0].scrollIntoView(true);', anchor );
 //					} );
-					// Sleep, perchance to dream
-					flow.execute( function() {
-						console.log( 'sleeping' );
-						return driver.sleep( 0 );
-					} );
 					// Open the design element
 					flow.execute( function() {
-						console.log( 'open' );
-						return anchor.getAttribute( 'href' ).then( function( href ) {
-							console.log( href );
-							anchor.click();
-						} );
+						console.log( 'opening ' + href );
+						return driver.get( href );
 					} );
 					// Scroll back to the top of the page
 					flow.execute( function() {
@@ -106,6 +99,11 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 						console.log( 'take screenshot' );
 						return driverHelper.eyesScreenshot( driver, eyes, title );
 					} );
+					// Scroll back to the top of the page
+					flow.execute( function() {
+						console.log( 'scroll to top' );
+						return driver.executeScript( 'window.scrollTo( 0, 0 )' );
+					} );
 					// Check for Compact button
 					flow.execute( function() {
 						console.log( 'check for compact' );
@@ -119,7 +117,15 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 						if ( compactable ) {
 							console.log( 'actually click compact' );
 							return devdocsDesignPage.getCurrentElementCompactButton().then( function( button ) {
-								button.click().then( function() {
+								if ( config.get( 'browser' ).toLowerCase() === 'sauce' ) {
+console.log("INSIDE CHROME");
+									return driver.actions().mouseMove( button, {x: 3, y: 3} ).click().perform().then( function() {
+										return driverHelper.eyesScreenshot( driver, eyes, title + ' (Compact)' );
+									} );
+								}
+console.log("OUTSIDE CHROME");
+
+								return button.click().then( function() {
 									return driverHelper.eyesScreenshot( driver, eyes, title + ' (Compact)' );
 								} );
 							} );
