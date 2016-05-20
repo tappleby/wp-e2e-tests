@@ -77,10 +77,18 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 //						console.log( 'scroll to element' );
 //						return driver.executeScript( 'arguments[0].scrollIntoView(true);', anchor );
 //					} );
+					// Sleep, perchance to dream
+					flow.execute( function() {
+						console.log( 'sleeping' );
+						return driver.sleep( 0 );
+					} );
 					// Open the design element
 					flow.execute( function() {
-						console.log( 'opening ' + href );
-						return driver.get( href );
+						console.log( 'open' );
+						return anchor.getAttribute( 'href' ).then( function( href ) {
+							console.log( href );
+							anchor.click();
+						} );
 					} );
 					// Scroll back to the top of the page
 					flow.execute( function() {
@@ -118,12 +126,10 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 							console.log( 'actually click compact' );
 							return devdocsDesignPage.getCurrentElementCompactButton().then( function( button ) {
 								if ( config.get( 'browser' ).toLowerCase() === 'sauce' ) {
-console.log("INSIDE CHROME");
 									return driver.actions().mouseMove( button, {x: 3, y: 3} ).click().perform().then( function() {
 										return driverHelper.eyesScreenshot( driver, eyes, title + ' (Compact)' );
 									} );
 								}
-console.log("OUTSIDE CHROME");
 
 								return button.click().then( function() {
 									return driverHelper.eyesScreenshot( driver, eyes, title + ' (Compact)' );
