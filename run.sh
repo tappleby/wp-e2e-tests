@@ -24,6 +24,7 @@ usage () {
 -g		  - Execute general tests in the specs/ directory
 -i		  - Execute i18n tests in the specs-i18n/ directory (Uses Firefox)
 -v [all/critical] - Execute the visdiff tests in specs-visdiff[/critical].  Must specify either 'all' or 'critical'.
+-l		  - Execute tests on Sauce Labs
 -h		  - This help listing
 EOF
   exit 0
@@ -33,7 +34,7 @@ if [ $# -eq 0 ]; then
   usage
 fi
 
-while getopts ":Rp:s:giv:h" opt; do
+while getopts ":Rp:s:giv:hl" opt; do
   case $opt in
     R)
       REPORTER="-R spec-xunit-slack-reporter"
@@ -52,11 +53,11 @@ while getopts ":Rp:s:giv:h" opt; do
       TARGET="specs/"
       ;;
     i)
-      NODE_CONFIG_ARGS+=$I18N_CONFIG
+      NODE_CONFIG_ARGS+=($I18N_CONFIG)
       TARGET="specs-i18n/"
       ;;
     v)
-      NODE_CONFIG_ARGS+=$VISDIFF_CONFIG
+      NODE_CONFIG_ARGS+=($VISDIFF_CONFIG)
       if [ "$OPTARG" == "all" ]; then
         TARGET="specs-visdiff/\*"
       elif [ "$OPTARG" == "critical" ]; then
@@ -65,6 +66,10 @@ while getopts ":Rp:s:giv:h" opt; do
         echo "-v supports the following values: all or critical"
         exit 1
       fi
+      ;;
+    l)
+      NODE_CONFIG_ARGS+=('"sauce":"true"')
+      continue
       ;;
     h)
       usage
@@ -91,17 +96,11 @@ IFS=, read -r -a SCREENSIZE_ARRAY <<< "$SCREENSIZES"
 for size in ${SCREENSIZE_ARRAY[@]}; do
   for target in "${TARGETS[@]}"; do
     # Combine any NODE_CONFIG entries into a single object
-    NODE_CONFIG_ARG="$(joinStr , ${NODE_CONFIG_ARGS[@]})"
+    NODE_CONFIG_ARG="$(joinStr , ${NODE_CONFIG_ARGS[*]})"
 
-    # Parse the browser out of the screensize parameter if necessary
-    if [[ $size == *:* ]]; then
-      BROWSER=$(echo $size | awk -F: '{print $1}')
-      size=$(echo $size | awk -F: '{print $2}')
-      NODE_CONFIG_ARG+=",\"browser\":\"$BROWSER\""
-      NC="--NODE_CONFIG='{$NODE_CONFIG_ARG}'"
-    fi
+    NC="--NODE_CONFIG='{$NODE_CONFIG_ARG}'"
 
-    CMD="env BROWSERSIZE=$size $MOCHA $NC $REPORTER $target $AFTER"
+    CMD="echo env BROWSERSIZE=$size $MOCHA $NC $REPORTER $target $AFTER"
 
     if [ $PARALLEL == 1 ]; then
       echo $CMD >> parallel_exec.cmd
