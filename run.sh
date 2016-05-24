@@ -25,6 +25,7 @@ usage () {
 -g		  - Execute general tests in the specs/ directory
 -i		  - Execute i18n tests in the specs-i18n/ directory (Uses Firefox)
 -v [all/critical] - Execute the visdiff tests in specs-visdiff[/critical].  Must specify either 'all' or 'critical'.
+-l		  - Execute tests on Sauce Labs
 -h		  - This help listing
 EOF
   exit 0
@@ -52,7 +53,7 @@ while getopts ":Rps:giv:h" opt; do
       TARGET="specs/"
       ;;
     i)
-      NODE_CONFIG_ARGS+=$I18N_CONFIG
+      NODE_CONFIG_ARGS+=($I18N_CONFIG)
       TARGET="specs-i18n/"
       ;;
     v)
@@ -65,6 +66,10 @@ while getopts ":Rps:giv:h" opt; do
         echo "-v supports the following values: all or critical"
         exit 1
       fi
+      ;;
+    l)
+      NODE_CONFIG_ARGS+=('"sauce":"true"')
+      continue
       ;;
     h)
       usage

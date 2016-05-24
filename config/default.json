@@ -14,5 +14,13 @@
   "neverSaveScreenshots": false,
   "useNewMobileEditor": false,
   "useNewMailosaur": true,
+  "defaultSauceConfig": {
+    "browserName": "chrome",
+    "platform": "OS X 10.10",
+    "screenResolution": "2048x1536",
+    "name": "Sample selenium-webdriver test",
+    "nativeEvents": "true",
+    "version": "48.0"
+  },
   "knownABTestKeys": [ "freeTrials", "freePlansDefault", "multiDomainRegistrationV1", "translatorInvitation", "freeTrialsInSignup", "freeTrialNudgeOnThankYouPage", "monthlyPlanPricing", "privacyCheckbox", "verticalThemes", "domainSuggestionVendor", "guidedTours", "triforce", "domainCreditsInfoNotice", "themesHeaderNudge", "planPricing", "domainsWithPlansOnly", "sidebarPlanLinkMyPlan", "wpcomPluginsInSidebar" ]
 }
