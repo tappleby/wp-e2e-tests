@@ -18,7 +18,6 @@ let Eyes = require( 'eyes.selenium' ).Eyes;
 let eyes = new Eyes();
 eyes.setApiKey( config.get( 'eyesKey' ) );
 eyes.setForceFullPageScreenshot( true );
-//eyes.setStitchMode( Eyes.StitchMode.CSS );
 
 if ( process.env.CIRCLE_BUILD_NUM ) {
 	eyes.setBatch( `wp-e2e-tests #${process.env.CIRCLE_BUILD_NUM}`, process.env.CIRCLE_BUILD_NUM );
@@ -67,7 +66,7 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 				let flow = driver.controlFlow();
 //TODO: Hide the masterbar so the CSS stitching doesn't make it overlay any elements
 
-				for ( const href of [ hrefs[0] ] ) {
+				for ( const href of hrefs ) {
 					let title;
 					let compactable;
 
