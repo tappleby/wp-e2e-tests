@@ -35,7 +35,7 @@ if [ $# -eq 0 ]; then
   usage
 fi
 
-while getopts ":Rps:giv:h" opt; do
+while getopts ":Rps:giv:hl:" opt; do
   case $opt in
     R)
       REPORTER="-R spec-xunit-slack-reporter"
@@ -68,7 +68,7 @@ while getopts ":Rps:giv:h" opt; do
       fi
       ;;
     l)
-      NODE_CONFIG_ARGS+=('"sauce":"true"')
+      NODE_CONFIG_ARGS+=("\"sauce\":\"true\",\"sauceConfig\":\"$OPTARG\"")
       continue
       ;;
     h)
