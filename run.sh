@@ -12,10 +12,8 @@ RETURN=0
 # Function to join arrays into a string
 function joinStr { local IFS="$1"; shift; echo "$*"; }
 
-I18N_CONFIG='"browser":"firefox","proxy":"system","neverSaveScreenshots":"true"'
-VISDIFF_CONFIG='"neverSaveScreenshots":"true"'
+I18N_CONFIG="--NODE_CONFIG='{\"browser\":\"firefox\",\"proxy\":\"system\",\"neverSaveScreenshots\":\"true\"}'"
 declare -a TARGETS
-declare -a NODE_CONFIG_ARGS
 
 usage () {
   cat <<EOF
@@ -53,8 +51,7 @@ while getopts ":Rps:giv:hl:" opt; do
       TARGET="specs/"
       ;;
     i)
-      NODE_CONFIG_ARGS+=($I18N_CONFIG)
-      TARGET="specs-i18n/"
+      TARGET="$I18N_CONFIG specs-i18n/"
       ;;
     v)
       VISDIFF=1
@@ -123,10 +120,14 @@ if [ $PARALLEL == 1 ]; then
       RETURN+=$?
   fi
   if [ $CIRCLE_NODE_INDEX == $VISUAL ] && [ $VISDIFF == 1 ]; then
+      # Combine any NODE_CONFIG entries into a single object -- Restricted for now to visdiffs, but should be generalized later
+      NODE_CONFIG_ARG="$(joinStr , ${NODE_CONFIG_ARGS[*]})"
+      NC="--NODE_CONFIG='{$NODE_CONFIG_ARG}'"
+
       echo "Executing visdiff tests at all screen widths"
-      CMD1="env BROWSERSIZE=mobile $MOCHA $GREP $REPORTER $VISDIFF_CONFIG specs-visdiff/critical/ $AFTER"
-      CMD2="env BROWSERSIZE=desktop $MOCHA $GREP $REPORTER $VISDIFF_CONFIG specs-visdiff/critical/ $AFTER"
-      CMD3="env BROWSERSIZE=tablet $MOCHA $GREP $REPORTER $VISDIFF_CONFIG specs-visdiff/critical/ $AFTER"
+      CMD1="env BROWSERSIZE=mobile $MOCHA $GREP $NC $REPORTER specs-visdiff/critical/ $AFTER"
+      CMD2="env BROWSERSIZE=desktop $MOCHA $GREP $NC $REPORTER specs-visdiff/critical/ $AFTER"
+      CMD3="env BROWSERSIZE=tablet $MOCHA $GREP $NC $REPORTER specs-visdiff/critical/ $AFTER"
 
       eval $CMD1
       RETURN+=$?
