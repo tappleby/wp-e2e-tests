@@ -34,7 +34,7 @@ if [ $# -eq 0 ]; then
   usage
 fi
 
-while getopts ":Rp:s:giv:hl" opt; do
+while getopts ":Rp:s:giv:hl:" opt; do
   case $opt in
     R)
       REPORTER="-R spec-xunit-slack-reporter"
@@ -68,7 +68,7 @@ while getopts ":Rp:s:giv:hl" opt; do
       fi
       ;;
     l)
-      NODE_CONFIG_ARGS+=('"sauce":"true"')
+      NODE_CONFIG_ARGS+=("\"sauce\":\"true\",\"sauceConfig\":\"$OPTARG\"")
       continue
       ;;
     h)
@@ -100,7 +100,7 @@ for size in ${SCREENSIZE_ARRAY[@]}; do
 
     NC="--NODE_CONFIG='{$NODE_CONFIG_ARG}'"
 
-    CMD="echo env BROWSERSIZE=$size $MOCHA $NC $REPORTER $target $AFTER"
+    CMD="env BROWSERSIZE=$size $MOCHA $NC $REPORTER $target $AFTER"
 
     if [ $PARALLEL == 1 ]; then
       echo $CMD >> parallel_exec.cmd
