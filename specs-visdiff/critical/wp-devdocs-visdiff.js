@@ -64,7 +64,6 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 		devdocsDesignPage.openUIComponents().then( function() {
 			devdocsDesignPage.getAllDesignElementLinks().then( function( hrefs ) {
 				let flow = driver.controlFlow();
-//TODO: Hide the masterbar so the CSS stitching doesn't make it overlay any elements
 
 				for ( const href of hrefs ) {
 					let title;
@@ -83,6 +82,10 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 						return devdocsDesignPage.getCurrentElementTitle().then( function( _title ) {
 							title = _title;
 						} );
+					} );
+					// Hide the masterbar for clean CSS stitching
+					flow.execute( function() {
+						return devdocsDesignPage.hideMasterbar();
 					} );
 					// Take the screenshot
 					flow.execute( function() {
@@ -130,13 +133,17 @@ test.describe( 'DevDocs Visual Diff (' + screenSizeName + ')', function() {
 
 	test.it( 'Verify Typography', function() {
 		devdocsDesignPage.openTypography().then( function() {
-			driverHelper.eyesScreenshot( driver, eyes, 'DevDocs Design (Typography)' );
+			devdocsDesignPage.hideMasterbar().then( function() {
+				driverHelper.eyesScreenshot( driver, eyes, 'DevDocs Design (Typography)' );
+			} );
 		} );
 	} );
 
 	test.it( 'Verify App Components', function() {
 		devdocsDesignPage.openAppComponents().then( function() {
-			driverHelper.eyesScreenshot( driver, eyes, 'DevDocs Design (App Components)' );
+			devdocsDesignPage.hideMasterbar().then( function() {
+				driverHelper.eyesScreenshot( driver, eyes, 'DevDocs Design (App Components)' );
+			} );
 		} );
 	} );
 
