@@ -7,7 +7,7 @@ if [ "$RUN_SPECIFIED" == "true" ]; then
 elif [ "$CIRCLE_BRANCH" == "master" ]; then
   TESTARGS="-R -p" # Parallel execution, implies -g -s mobile,desktop,tablet
   if [ "$RUN_VISDIFF" == "true" ] && [ "$DEPLOY_USER" != "" ]; then
-    TESTARGS+=" -v critical"
+    TESTARGS+=" -v critical -l osx-chrome"
   fi
 fi
 
